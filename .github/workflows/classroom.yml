@@ -1,0 +1,50 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Random guess
+      id: random-guess
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Random guess
+        setup-command: pip install -r tests/requirements-autograder.txt
+        command: pytest tests/test_autograder.py::test_random_guess -v
+        timeout: 5
+        max-score: 2
+    - name: Bayesiaan inference
+      id: bayesiaan-inference
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Bayesiaan inference
+        setup-command: pip install -r tests/requirements-autograder.txt
+        command: pytest tests/test_autograder.py::test_bayesiaan_inference -v
+        timeout: 10
+        max-score: 8
+    - name: Benchmark accuracy
+      id: benchmark-accuracy
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Benchmark accuracy
+        setup-command: pip install -r tests/requirements-autograder.txt
+        command: pytest tests/test_autograder.py::test_benchmark_accuracy -v
+        timeout: 15
+        max-score: 3
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        RANDOM-GUESS_RESULTS: "${{steps.random-guess.outputs.result}}"
+        BAYESIAAN-INFERENCE_RESULTS: "${{steps.bayesiaan-inference.outputs.result}}"
+        BENCHMARK-ACCURACY_RESULTS: "${{steps.benchmark-accuracy.outputs.result}}"
+      with:
+        runners: random-guess,bayesiaan-inference,benchmark-accuracy
